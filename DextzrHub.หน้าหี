@@ -1,0 +1,74 @@
+-- รองรับเฉพาะ BF กับ Anime
+local maps = {
+    -- Blox Fruits
+    [2753915549] = true,
+    [4442272183] = true,
+    [7449423635] = true,
+    [73902483975735] = true,
+    [76401440271920] = true,
+    [79091703265657] = true,
+    [85211729168715] = true,
+    [92968389658553] = true,
+    [95165932064349] = true,
+    [100117331123089] = true,
+    [101151419317285] = true,
+    [113741252407134] = true,
+    [114279672983750] = true,
+    [117896981438898] = true,
+    [122478697296975] = true,
+
+    -- Anime
+    [70768610276749] = true,
+    [73019180051115] = true,
+    [73912821025828] = true,
+    [77367808280910] = true,
+    [81100481912247] = true,
+    [92577188734435] = true,
+    [95240177479580] = true,
+    [95996380540192] = true,
+    [100744519298647] = true,
+    [105865260245236] = true,
+    [112175864208911] = true,
+    [113644871968832] = true,
+    [113963744934619] = true,
+    [114362984588904] = true,
+    [120826799896677] = true,
+    [126889338150949] = true,
+    [127316980657672] = true,
+    [129369781546936] = true,
+    [130426042808804] = true,
+    [132561514935233] = true,
+    [136683944064056] = true
+}
+
+local player = game.Players.LocalPlayer
+local placeId = game.PlaceId
+
+if not maps[placeId] then
+    player:Kick("แมพนี้ไม่รองรับ")
+    return
+end
+
+-- Blox Fruits
+if placeId == 2753915549
+or placeId == 4442272183
+or placeId == 7449423635
+or placeId == 73902483975735
+or placeId == 76401440271920
+or placeId == 79091703265657
+or placeId == 85211729168715
+or placeId == 92968389658553
+or placeId == 95165932064349
+or placeId == 100117331123089
+or placeId == 101151419317285
+or placeId == 113741252407134
+or placeId == 114279672983750
+or placeId == 117896981438898
+or placeId == 122478697296975 then
+
+loadstring(game:HttpGet("https://raw.githubusercontent.com/Teufkijdjd/BloxFruitsloadsrting/refs/heads/main/BloxFruits"))()
+
+else
+    -- Anime
+    loadstring(game:HttpGet("https://api.getpolsec.com/scripts/hosted/bd221984f48ed6db1a8b252adcc9e71dbaa5cbe277b14c5ffa70b8113fa93492.lua"))()
+end
