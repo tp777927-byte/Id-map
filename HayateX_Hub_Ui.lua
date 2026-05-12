@@ -102,6 +102,7 @@ UI.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 -- Library
 -- ============================================================
 local library = {}
+library._toggleGuiRefs = {}  -- เก็บ ref ของ ToggleGui ที่สร้างไว้
 
 function library:Evil(text, text2, logo)
 	local Main = Instance.new("Frame")
@@ -542,6 +543,7 @@ function library:Evil(text, text2, logo)
 			function functionitem:Toggle(Name, default, callback)
 				local ToglFunc = {}
 				local Tgo = default or false
+				local ToggleOnColor = _G.Color or Color3.fromRGB(0, 255, 0)
 				local MainToggle = Instance.new("Frame")
 				local UICorner_t = Instance.new("UICorner")
 				local Text = Instance.new("TextLabel")
@@ -590,7 +592,7 @@ function library:Evil(text, text2, logo)
 				TextButton.Text = ""
 
 				if default == true then
-					MainToggle_3.BackgroundColor3 = Color3.fromRGB(30, 50, 30)
+					MainToggle_3.BackgroundColor3 = ToggleOnColor
 					MainToggle_3:TweenSize(UDim2.new(0, 20, 0, 20), "In", "Quad", 0.1, true)
 					MainToggle_3.Image = "http://www.roblox.com/asset/?id=6023426926"
 					UICorner_3.CornerRadius = UDim.new(0, 100)
@@ -600,13 +602,13 @@ function library:Evil(text, text2, logo)
 				TextButton.MouseButton1Click:Connect(function()
 					if Tgo == false then
 						Tgo = true
-						MainToggle_3.BackgroundColor3 = Color3.fromRGB(113, 255, 78)
+						TweenService:Create(MainToggle_3, TweenInfo.new(0.15), {BackgroundColor3 = ToggleOnColor}):Play()
 						MainToggle_3:TweenSize(UDim2.new(0, 25, 0, 25), "In", "Quad", 0.2, true)
 						MainToggle_3.Image = "http://www.roblox.com/asset/?id=6023426926"
 						UICorner_3.CornerRadius = UDim.new(0, 100)
 					else
 						Tgo = false
-						MainToggle_3.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+						TweenService:Create(MainToggle_3, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(20, 20, 20)}):Play()
 						MainToggle_3.Image = ""
 						MainToggle_3:TweenSize(UDim2.new(0, 25, 0, 25), "In", "Quad", 0.2, true)
 						UICorner_3.CornerRadius = UDim.new(0, 5)
@@ -618,15 +620,23 @@ function library:Evil(text, text2, logo)
 				function ToglFunc:Set(state)
 					Tgo = state
 					if state then
-						MainToggle_3.BackgroundColor3 = Color3.fromRGB(113, 255, 78)
+						TweenService:Create(MainToggle_3, TweenInfo.new(0.15), {BackgroundColor3 = ToggleOnColor}):Play()
 						MainToggle_3.Image = "http://www.roblox.com/asset/?id=6023426926"
 						UICorner_3.CornerRadius = UDim.new(0, 100)
 					else
-						MainToggle_3.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+						TweenService:Create(MainToggle_3, TweenInfo.new(0.15), {BackgroundColor3 = Color3.fromRGB(20, 20, 20)}):Play()
 						MainToggle_3.Image = ""
 						UICorner_3.CornerRadius = UDim.new(0, 5)
 					end
 					pcall(callback, state)
+				end
+
+				-- เปลี่ยนสีปุ่ม toggle ได้ตามต้องการ
+				function ToglFunc:SetColor(color)
+					ToggleOnColor = color
+					if Tgo then
+						TweenService:Create(MainToggle_3, TweenInfo.new(0.2), {BackgroundColor3 = color}):Play()
+					end
 				end
 
 				return ToglFunc
@@ -1369,6 +1379,181 @@ function library:ApplyColor(color)
             end
         end
     end
+end
+
+-- ============================================================
+-- ToggleGui — ปุ่ม floating สำหรับซ่อน/แสดง GUI
+-- ============================================================
+
+--[[
+    ใช้งาน:
+    library:CreateToggleGui()
+    หรือ
+    library:CreateToggleGui(assetId)  -- ใส่ asset id โลโก้เอง
+
+    จะสร้างปุ่มกลม floating ที่กดแล้วส่ง RightControl
+    เพื่อ toggle GUI พร้อม hover animation และ rotation
+    ลาก (Draggable) ได้
+]]
+
+function library:CreateToggleGui(logo)
+    local ToggleGui = Instance.new("ScreenGui")
+    ToggleGui.Name = "AttackHub_ToggleGui"
+    ToggleGui.Parent = game.CoreGui
+    ToggleGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+    -- Shadow
+    local Shadow = Instance.new("Frame")
+    Shadow.Parent = ToggleGui
+    Shadow.AnchorPoint = Vector2.new(0.5, 0.5)
+    Shadow.Position = UDim2.new(0, 80, 0, 80)
+    Shadow.Size = UDim2.new(0, 55, 0, 55)
+    Shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    Shadow.BackgroundTransparency = 0.5
+    Shadow.BorderSizePixel = 0
+    local ShadowCorner = Instance.new("UICorner")
+    ShadowCorner.CornerRadius = UDim.new(0, 100)
+    ShadowCorner.Parent = Shadow
+
+    -- Main Button
+    local ToggleBtn = Instance.new("ImageButton")
+    ToggleBtn.Name = "AttackHubToggle"
+    ToggleBtn.Parent = ToggleGui
+    ToggleBtn.AnchorPoint = Vector2.new(0.5, 0.5)
+    ToggleBtn.Position = UDim2.new(0, 80, 0, 80)
+    ToggleBtn.Size = UDim2.new(0, 50, 0, 50)
+    ToggleBtn.BackgroundColor3 = Color3.fromRGB(11, 12, 13)
+    ToggleBtn.BackgroundTransparency = 0
+    ToggleBtn.BorderSizePixel = 0
+    ToggleBtn.AutoButtonColor = false
+    ToggleBtn.Image = "rbxassetid://" .. tostring(logo or _G.Logo or 13732317842)
+    ToggleBtn.ScaleType = Enum.ScaleType.Fit
+    ToggleBtn.Draggable = true
+
+    local BtnCorner = Instance.new("UICorner")
+    BtnCorner.CornerRadius = UDim.new(0, 100)
+    BtnCorner.Parent = ToggleBtn
+
+    local BtnStroke = Instance.new("UIStroke")
+    BtnStroke.Thickness = 2.5
+    BtnStroke.ApplyStrokeMode = Enum.ApplyStrokeMode.Border
+    BtnStroke.Color = _G.Color or Color3.fromRGB(0, 255, 0)
+    BtnStroke.Transparency = 0.1
+    BtnStroke.Parent = ToggleBtn
+
+    -- Hover animations
+    ToggleBtn.MouseEnter:Connect(function()
+        TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.InOut), {
+            Size = UDim2.new(0, 70, 0, 70)
+        }):Play()
+        TweenService:Create(Shadow, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.InOut), {
+            Size = UDim2.new(0, 75, 0, 75),
+            BackgroundTransparency = 0.6
+        }):Play()
+    end)
+
+    ToggleBtn.MouseLeave:Connect(function()
+        TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.InOut), {
+            Size = UDim2.new(0, 50, 0, 50)
+        }):Play()
+        TweenService:Create(Shadow, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.InOut), {
+            Size = UDim2.new(0, 55, 0, 55),
+            BackgroundTransparency = 0.5
+        }):Play()
+    end)
+
+    -- Click: rotate animation + ส่ง RightControl เพื่อ toggle GUI หลัก
+    ToggleBtn.MouseButton1Down:Connect(function()
+        TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.InOut), {
+            Rotation = 180
+        }):Play()
+        TweenService:Create(BtnStroke, TweenInfo.new(0.15), {
+            Transparency = 0.5
+        }):Play()
+
+        local ok, VirtualInput = pcall(function()
+            return game:GetService("VirtualInputManager")
+        end)
+        if ok and VirtualInput then
+            VirtualInput:SendKeyEvent(true, 305, false, game)
+            VirtualInput:SendKeyEvent(false, 305, false, game)
+        end
+
+        task.wait(0.35)
+        TweenService:Create(ToggleBtn, TweenInfo.new(0.2, Enum.EasingStyle.Back, Enum.EasingDirection.InOut), {
+            Rotation = 0
+        }):Play()
+        TweenService:Create(BtnStroke, TweenInfo.new(0.15), {
+            Transparency = 0.1
+        }):Play()
+    end)
+
+    -- Sync shadow ตาม button เมื่อลาก
+    RunService.Heartbeat:Connect(function()
+        pcall(function()
+            Shadow.Position = ToggleBtn.Position
+        end)
+    end)
+
+    local toggleGuiFunc = {}
+
+    function toggleGuiFunc:SetVisible(state)
+        ToggleGui.Enabled = state
+    end
+
+    function toggleGuiFunc:UpdateColor(color)
+        BtnStroke.Color = color
+    end
+
+    function toggleGuiFunc:UpdateLogo(assetId)
+        ToggleBtn.Image = "rbxassetid://" .. tostring(assetId)
+    end
+
+    return toggleGuiFunc
+end
+
+-- ============================================================
+-- Settings API — จัดการสี/โลโก้ได้ทุกอย่างในที่เดียว
+-- ============================================================
+
+--[[
+    ใช้งาน:
+    local cfg = library:Settings(toggleGuiObject)
+
+    cfg:SetGuiColor(Color3.fromRGB(255, 0, 0))        -- เปลี่ยนสี GUI หลักทั้งหมด
+    cfg:SetToggleColor(myToggle, Color3.fromRGB(...))  -- เปลี่ยนสีปุ่ม toggle ฟังชั่น
+    cfg:SetLogo(12345678)                              -- เปลี่ยนโลโก้ปุ่ม floating
+]]
+
+function library:Settings(toggleGuiRef)
+    local cfg = {}
+
+    -- เปลี่ยนสี GUI หลักทั้งหมด (border, section title, button, slider ฯลฯ)
+    function cfg:SetGuiColor(color)
+        _G.Color = color
+        library:ApplyColor(color)
+        -- อัปเดต stroke ของปุ่ม floating ด้วย (ถ้าส่ง toggleGuiRef มา)
+        if toggleGuiRef and toggleGuiRef.UpdateColor then
+            toggleGuiRef:UpdateColor(color)
+        end
+    end
+
+    -- เปลี่ยนสีปุ่ม toggle ฟังชั่นเฉพาะตัว
+    -- ใช้: cfg:SetToggleColor(myToggle, Color3.fromRGB(255,0,0))
+    function cfg:SetToggleColor(toggleFunc, color)
+        if toggleFunc and toggleFunc.SetColor then
+            toggleFunc:SetColor(color)
+        end
+    end
+
+    -- เปลี่ยนโลโก้ปุ่ม floating toggle gui
+    function cfg:SetLogo(assetId)
+        if toggleGuiRef and toggleGuiRef.UpdateLogo then
+            toggleGuiRef:UpdateLogo(assetId)
+        end
+    end
+
+    return cfg
 end
 
 -- ============================================================
