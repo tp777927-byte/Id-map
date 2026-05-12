@@ -943,33 +943,73 @@ function library:Evil(text, text2, logo)
 				cvc.CornerRadius = UDim.new(0, 10)
 				cvc.Parent = ConneValue
 
-				local function move(input)
-					local pos = UDim2.new(math.clamp((input.Position.X - ValueFrame.AbsolutePosition.X) / ValueFrame.AbsoluteSize.X, 0, 1), 0, 0.5, 0)
-					local pos1 = UDim2.new(math.clamp((input.Position.X - ValueFrame.AbsolutePosition.X) / ValueFrame.AbsoluteSize.X, 0, 1), 0, 0, 5)
-					MainValue:TweenSize(pos1, "Out", "Sine", 0.2, true)
-					ConneValue:TweenPosition(pos, "Out", "Sine", 0.2, true)
-					local value
+				-- คำนวณ value จาก scale
+				local function calcValue(scale)
+					local raw = scale * (max - min) + min
 					if floor then
-						value = string.format("%.0f", ((pos.X.Scale * max) / max) * (max - min) + min)
+						return tonumber(string.format("%.0f", raw))
 					else
-						value = math.floor(((pos.X.Scale * max) / max) * (max - min) + min)
+						return math.floor(raw)
 					end
+				end
+
+				-- อัปเดต UI ตำแหน่ง slider (ไม่ใช้ Tween เพราะทำให้ lag ขณะลาก)
+				local function applyScale(scale)
+					scale = math.clamp(scale, 0, 1)
+					MainValue.Size = UDim2.new(scale, 0, 0, 5)
+					ConneValue.Position = UDim2.new(scale, 0, 0.5, 0)
+				end
+
+				local function move(input)
+					local scale = math.clamp(
+						(input.Position.X - ValueFrame.AbsolutePosition.X) / ValueFrame.AbsoluteSize.X,
+						0, 1
+					)
+					applyScale(scale)
+					local value = calcValue(scale)
 					CustomValue.Text = tostring(value)
 					callback(value)
 				end
 
 				local dragging = false
 				for _, obj in ipairs({ConneValue, SliderFrame, ValueFrame}) do
-					obj.InputBegan:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = true end end)
-					obj.InputEnded:Connect(function(input) if input.UserInputType == Enum.UserInputType.MouseButton1 then dragging = false end end)
+					obj.InputBegan:Connect(function(input)
+						if input.UserInputType == Enum.UserInputType.MouseButton1 then
+							dragging = true
+							move(input)
+						end
+					end)
+					obj.InputEnded:Connect(function(input)
+						if input.UserInputType == Enum.UserInputType.MouseButton1 then
+							dragging = false
+						end
+					end)
 				end
 				UserInputService.InputChanged:Connect(function(input)
-					if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then move(input) end
+					if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
+						move(input)
+					end
+				end)
+
+				-- พิมค่าในกล่องแล้ว Enter/กด Tab → อัปเดต slider ทันที
+				CustomValue.FocusLost:Connect(function()
+					local num = tonumber(CustomValue.Text)
+					if not num then
+						CustomValue.Text = tostring(calcValue(MainValue.Size.X.Scale))
+						return
+					end
+					num = math.clamp(num, min, max)
+					local scale = (num - min) / (max - min)
+					applyScale(scale)
+					local value = calcValue(scale)
+					CustomValue.Text = tostring(value)
+					pcall(callback, value)
 				end)
 
 				function sliderfunc:Update(value)
-					MainValue:TweenSize(UDim2.new((value or 0) / max, 0, 0, 5), "Out", "Sine", 0.2, true)
-					ConneValue:TweenPosition(UDim2.new((value or 0)/max, 0, 0.5, 0), "Out", "Sine", 0.2, true)
+					value = math.clamp(value, min, max)
+					local scale = (value - min) / (max - min)
+					applyScale(scale)
 					CustomValue.Text = tostring(value)
 					pcall(callback, value)
 				end
